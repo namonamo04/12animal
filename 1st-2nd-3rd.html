@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コミュニケーションコード診断 (多面分析)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink: #211c17;
+      --sub: #6f6557;
+      --paper: #f3ece0;
+      --paper2: #ece2d2;
+      --vermilion: #c0392b;
+      --vermilion-deep: #9c2a1f;
+      --line: #cdbfa8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(120% 90% at 50% -10%, #fbf7ee 0%, var(--paper) 45%, var(--paper2) 100%);
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* paper grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .05;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 540px;
+      background: rgba(255, 253, 248, .72);
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 38px 24px 34px;
+      box-shadow: 0 24px 60px -28px rgba(60, 40, 20, .4);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: .42em;
+      color: var(--vermilion-deep);
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-indent: .42em;
+    }
+
+    h1 {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 800;
+      text-align: center;
+      font-size: 28px;
+      letter-spacing: .06em;
+      line-height: 1.3;
+    }
+
+    h1 .small {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: .16em;
+      color: var(--sub);
+      margin-top: 8px
+    }
+
+    .rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 22px 0 24px
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .16em;
+      color: var(--sub);
+      margin-bottom: 9px;
+      font-weight: 700
+    }
+
+    .field {
+      display: flex;
+      gap: 10px
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      font-family: "Shippori Mincho B1", serif;
+      font-size: 24px;
+      letter-spacing: .18em;
+      text-align: center;
+      color: var(--ink);
+      background: #fffdf8;
+      border: 1.5px solid var(--line);
+      border-radius: 4px;
+      padding: 13px 10px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus {
+      border-color: var(--vermilion)
+    }
+
+    input::placeholder {
+      color: #c4b8a4;
+      letter-spacing: .18em
+    }
+
+    button {
+      flex: 0 0 auto;
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .12em;
+      color: #fff;
+      background: var(--vermilion);
+      border: none;
+      border-radius: 4px;
+      padding: 0 20px;
+      cursor: pointer;
+      transition: background .18s, transform .08s;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: var(--vermilion-deep)
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--sub);
+      margin-top: 10px;
+      letter-spacing: .04em
+    }
+
+    .err {
+      color: var(--vermilion-deep);
+      font-weight: 700;
+      min-height: 16px;
+      font-size: 12.5px;
+      margin-top: 10px;
+      letter-spacing: .03em
+    }
+
+    /* result */
+    .result {
+      margin-top: 26px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .5s, transform .5s
+    }
+
+    .result.show {
+      opacity: 1;
+      transform: none
+    }
+
+    .stamps-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stamp-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stamp-title {
+      font-size: 11px;
+      letter-spacing: .1em;
+      color: var(--vermilion-deep);
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .stamp {
+      --d: 112px;
+      width: var(--d);
+      height: var(--d);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--vermilion);
+      border: 3px solid var(--vermilion);
+      box-shadow: inset 0 0 0 2px rgba(192, 57, 43, .25);
+      position: relative;
+    }
+
+    .stamp .code {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 800;
+      font-size: 38px;
+      letter-spacing: .02em;
+      line-height: 1
+    }
+
+    .stamp .lbl {
+      font-size: 6.5px;
+      letter-spacing: .12em;
+      margin-top: 4px;
+      text-indent: .12em;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .reveal {
+      animation: pop .55s cubic-bezier(.2, 1.3, .5, 1) both
+    }
+
+    /* Stagger effect */
+    .stamp-box:nth-child(1) .reveal { animation-delay: 0s; }
+    .stamp-box:nth-child(2) .reveal { animation-delay: 0.12s; }
+    .stamp-box:nth-child(3) .reveal { animation-delay: 0.24s; }
+
+    @keyframes pop {
+      from {
+        transform: scale(.6) rotate(-8deg);
+        opacity: 0
+      }
+
+      to {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .sentence {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 700;
+      text-align: center;
+      font-size: 20px;
+      margin-top: 14px;
+      letter-spacing: .04em;
+      line-height: 1.5;
+    }
+
+    .sentence b {
+      color: var(--vermilion)
+    }
+
+    .meta {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--sub);
+      margin-top: 6px;
+      letter-spacing: .1em
+    }
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 10.5px;
+      color: #a99c86;
+      letter-spacing: .06em;
+      line-height: 1.7
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <h1>コミュニケーションコード<span class="small"><span style="display: inline-block;">生年月日からあなたの「本質」「表面」「意思決定」の</span><span
+          style="display: inline-block;">コミュニケーションコードを診断</span></span></h1>
+    <div class="rule"></div>
+
+    <label for="bd">生年月日（西暦8桁）</label>
+    <div class="field">
+      <input id="bd" inputmode="numeric" maxlength="8" placeholder="19900101" autocomplete="off">
+      <button id="go">診断する</button>
+    </div>
+    <div class="hint">例：1990年1月1日 → <b>19900101</b>（1900〜2050年に対応）</div>
+    <div class="err" id="err"></div>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="stamps-wrap">
+        <div class="stamp-box">
+          <div class="stamp-title">本質 (1st)</div>
+          <div class="stamp" id="stamp1">
+            <div class="code" id="code1">000</div>
+          </div>
+        </div>
+        <div class="stamp-box">
+          <div class="stamp-title">表面 (2nd)</div>
+          <div class="stamp" id="stamp2">
+            <div class="code" id="code2">000</div>
+          </div>
+        </div>
+        <div class="stamp-box">
+          <div class="stamp-title">意思決定 (3rd)</div>
+          <div class="stamp" id="stamp3">
+            <div class="code" id="code3">000</div>
+          </div>
+        </div>
+      </div>
+      <div class="sentence">
+        あなたの本質は <b id="codeText1">000</b>、表面は <b id="codeText2">000</b>、<span style="display: inline-block;">意思決定は <b id="codeText3">000</b> です！</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // 日柱60番号 -> 内部分類（本質コード算出用）
+    const IDX_TO_ANIMAL = {
+      1: 'チーター', 2: 'たぬき', 3: '猿', 4: 'コアラ', 5: '黒ひょう', 6: '虎',
+      7: 'チーター', 8: 'たぬき', 9: '猿', 10: 'コアラ', 11: 'こじか', 12: 'ゾウ',
+      13: '狼', 14: 'ひつじ', 15: '猿', 16: 'コアラ', 17: 'こじか', 18: 'ゾウ',
+      19: '狼', 20: 'ひつじ', 21: 'ペガサス', 22: 'ペガサス', 23: 'ひつじ', 24: '狼',
+      25: '狼', 26: 'ひつじ', 27: 'ペガサス', 28: 'ペガサス', 29: 'ひつじ', 30: '狼',
+      31: 'ゾウ', 32: 'こじか', 33: 'コアラ', 34: '猿', 35: 'ひつじ', 36: '狼',
+      37: 'ゾウ', 38: 'こじか', 39: 'コアラ', 40: '猿', 41: 'たぬき', 42: 'チーター',
+      43: '虎', 44: '黒ひょう', 45: 'コアラ', 46: '猿', 47: 'たぬき', 48: 'チーター',
+      49: '虎', 50: '黒ひょう', 51: 'ライオン', 52: 'ライオン', 53: '黒ひょう', 54: '虎',
+      55: '虎', 56: '黒ひょう', 57: 'ライオン', 58: 'ライオン', 59: '黒ひょう', 60: '虎'
+    };
+
+    const ANIMAL_TO_CODE = {
+      '狼': '001', '猿': '919', '虎': '555', 'コアラ': '125', 'チーター': '888', 'ライオン': '100',
+      'ゾウ': '024', 'ペガサス': '000', 'こじか': '108', '黒ひょう': '012', 'たぬき': '789', 'ひつじ': '025'
+    };
+
+    // 十二運星に対応する動物キャラクター
+    const STAGE_TO_ANIMAL = [
+      '猿', 'チーター', '黒ひょう', 'ライオン', '虎', 'たぬき',
+      'コアラ', 'ゾウ', 'ひつじ', 'ペガサス', '狼', 'こじか'
+    ];
+
+    // 二十四節気（月別節入り日）計算用の定数
+    const TERM_D = {
+      1: 6.3811,   // 小寒
+      2: 4.8693,   // 立春
+      3: 6.3968,   // 啓蟄
+      4: 5.6280,   // 清明
+      5: 6.3771,   // 立夏
+      6: 6.5733,   // 芒種
+      7: 8.0091,   // 小暑
+      8: 8.4102,   // 立秋
+      9: 8.5186,   // 白露
+      10: 9.1414,  // 寒露
+      11: 8.2396,  // 立冬
+      12: 7.9152   // 大雪
+    };
+    const TERM_A = {
+      1: 0.242778,
+      2: 0.242713,
+      3: 0.242512,
+      4: 0.242231,
+      5: 0.241945,
+      6: 0.241731,
+      7: 0.241642,
+      8: 0.241703,
+      9: 0.241898,
+      10: 0.242179,
+      11: 0.242469,
+      12: 0.242689
+    };
+
+    // 簡易的な節入り日算出関数
+    function getTermDay(y, m) {
+      let Y = y;
+      if (m === 1 || m === 2) {
+        Y = y - 1;
+      }
+      const D = TERM_D[m];
+      const A = TERM_A[m];
+      return Math.floor(D + A * (Y - 1900) - Math.floor((Y - 1900) / 4));
+    }
+
+    // 四柱推命における年柱・月柱の地支インデックスを算出する関数
+    function calcPillars(y, m, d) {
+      const termDay = getTermDay(y, m);
+      let solarM = m;
+      let solarY = y;
+
+      if (d < termDay) {
+        solarM = m - 1;
+        if (solarM === 0) {
+          solarM = 12;
+        }
+        if (m === 1 || m === 2) {
+          solarY = y - 1;
+        }
+      } else {
+        if (m === 1) {
+          solarY = y - 1;
+        }
+      }
+
+      // 地支マッピング (1:丑, 2:寅, 3:卯, 4:辰, 5:巳, 6:午, 7:未, 8:申, 9:酉, 10:戌, 11:亥, 0:子)
+      const monthBranchIdx = solarM % 12;
+
+      // 年柱の干支インデックス (1984年 = 甲子(1))
+      const yearIdx = ((solarY - 1984) % 60 + 60) % 60 + 1;
+      const yearBranchIdx = (yearIdx - 1) % 12;
+
+      return { yearBranchIdx, monthBranchIdx };
+    }
+
+    // 十干と地支から十二運星（動物キャラ）を求める関数
+    function getStageIndex(stemIdx, branchIdx) {
+      if (stemIdx % 2 === 0) {
+        // 陽干 (甲=0, 丙=2, 戊=4, 庚=6, 壬=8) -> 順行
+        const startMap = { 0: 11, 2: 2, 4: 2, 6: 5, 8: 8 };
+        const start = startMap[stemIdx];
+        return ((branchIdx - start + 12) % 12 + 12) % 12;
+      } else {
+        // 陰干 (乙=1, 丁=3, 己=5, 辛=7, 癸=9) -> 逆行
+        const startMap = { 1: 6, 3: 9, 5: 9, 7: 0, 9: 3 };
+        const start = startMap[stemIdx];
+        return ((start - branchIdx + 12) % 12 + 12) % 12;
+      }
+    }
+
+    function getAnimal(stemIdx, branchIdx) {
+      const stageIdx = getStageIndex(stemIdx, branchIdx);
+      return STAGE_TO_ANIMAL[stageIdx];
+    }
+
+    const ANCHOR = Date.UTC(1980, 2, 10), ANCHOR_IDX = 19;
+    function calcDayIdx(y, m, d) {
+      const days = Math.round((Date.UTC(y, m - 1, d) - ANCHOR) / 86400000);
+      return (((ANCHOR_IDX - 1 + days) % 60) + 60) % 60 + 1;
+    }
+
+    function normalize(s) {
+      return s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9]/g, '');
+    }
+
+    const $ = id => document.getElementById(id);
+    const input = $('bd'), err = $('err'), result = $('result');
+
+    function diagnose() {
+      const s = normalize(input.value);
+      err.textContent = '';
+      if (s.length !== 8) { err.textContent = '西暦8桁で入力してください（例：19900101）'; return; }
+      const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) { err.textContent = '存在しない日付です'; return; }
+      if (y < 1900 || y > 2050) { err.textContent = '1900〜2050年に対応しています'; return; }
+
+      // 1st: 本質キャラ（日柱の地支十二運）
+      const dayIdx = calcDayIdx(y, m, d);
+      const essentialAnimal = IDX_TO_ANIMAL[dayIdx];
+      const essentialCode = ANIMAL_TO_CODE[essentialAnimal];
+
+      // 日柱の十干 (0:甲, 1:乙, 2:丙, 3:丁, 4:戊, 5:己, 6:庚, 7:辛, 8:壬, 9:癸)
+      const stemIdx = (dayIdx - 1) % 10;
+
+      // 年柱・月柱の地支インデックスを計算
+      const { yearBranchIdx, monthBranchIdx } = calcPillars(y, m, d);
+
+      // 2nd: 表面キャラ（月柱の地支十二運）
+      const surfaceAnimal = getAnimal(stemIdx, monthBranchIdx);
+      const surfaceCode = ANIMAL_TO_CODE[surfaceAnimal];
+
+      // 3rd: 意思決定キャラ（年柱の地支十二運）
+      const decisionAnimal = getAnimal(stemIdx, yearBranchIdx);
+      const decisionCode = ANIMAL_TO_CODE[decisionAnimal];
+
+      // 画面更新
+      $('code1').textContent = essentialCode;
+      $('codeText1').textContent = essentialCode;
+
+      $('code2').textContent = surfaceCode;
+      $('codeText2').textContent = surfaceCode;
+
+      $('code3').textContent = decisionCode;
+      $('codeText3').textContent = decisionCode;
+
+      result.classList.add('show');
+
+      // 時間差で落款スタンプを表示させるアニメーション処理
+      const stamp1 = $('stamp1');
+      const stamp2 = $('stamp2');
+      const stamp3 = $('stamp3');
+
+      stamp1.classList.remove('reveal');
+      stamp2.classList.remove('reveal');
+      stamp3.classList.remove('reveal');
+
+      void stamp1.offsetWidth; // リフローを強制してアニメーションをリセット
+
+      stamp1.classList.add('reveal');
+      stamp2.classList.add('reveal');
+      stamp3.classList.add('reveal');
+    }
+
+    $('go').addEventListener('click', diagnose);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') diagnose(); });
+    input.addEventListener('input', () => { input.value = normalize(input.value).slice(0, 8); });
+  </script>
+</body>
+
+</html>
