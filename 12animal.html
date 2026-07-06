@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コミュニケーションコード診断</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --ink: #211c17;
+      --sub: #6f6557;
+      --paper: #f3ece0;
+      --paper2: #ece2d2;
+      --vermilion: #c0392b;
+      --vermilion-deep: #9c2a1f;
+      --line: #cdbfa8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(120% 90% at 50% -10%, #fbf7ee 0%, var(--paper) 45%, var(--paper2) 100%);
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 18px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* paper grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .05;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255, 253, 248, .72);
+      backdrop-filter: blur(2px);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 38px 30px 34px;
+      box-shadow: 0 24px 60px -28px rgba(60, 40, 20, .4);
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: .42em;
+      color: var(--vermilion-deep);
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-indent: .42em;
+    }
+
+    h1 {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 800;
+      text-align: center;
+      font-size: 30px;
+      letter-spacing: .06em;
+      line-height: 1.3;
+    }
+
+    h1 .small {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: .22em;
+      color: var(--sub);
+      margin-top: 8px
+    }
+
+    .rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 22px 0 24px
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: .16em;
+      color: var(--sub);
+      margin-bottom: 9px;
+      font-weight: 700
+    }
+
+    .field {
+      display: flex;
+      gap: 10px
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      font-family: "Shippori Mincho B1", serif;
+      font-size: 24px;
+      letter-spacing: .18em;
+      text-align: center;
+      color: var(--ink);
+      background: #fffdf8;
+      border: 1.5px solid var(--line);
+      border-radius: 4px;
+      padding: 13px 10px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus {
+      border-color: var(--vermilion)
+    }
+
+    input::placeholder {
+      color: #c4b8a4;
+      letter-spacing: .18em
+    }
+
+    button {
+      flex: 0 0 auto;
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: .12em;
+      color: #fff;
+      background: var(--vermilion);
+      border: none;
+      border-radius: 4px;
+      padding: 0 20px;
+      cursor: pointer;
+      transition: background .18s, transform .08s;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: var(--vermilion-deep)
+    }
+
+    button:active {
+      transform: translateY(1px)
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--sub);
+      margin-top: 10px;
+      letter-spacing: .04em
+    }
+
+    .err {
+      color: var(--vermilion-deep);
+      font-weight: 700;
+      min-height: 16px;
+      font-size: 12.5px;
+      margin-top: 10px;
+      letter-spacing: .03em
+    }
+
+    /* result */
+    .result {
+      margin-top: 26px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .5s, transform .5s
+    }
+
+    .result.show {
+      opacity: 1;
+      transform: none
+    }
+
+    .stamp-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 6px
+    }
+
+    .stamp {
+      --d: 138px;
+      width: var(--d);
+      height: var(--d);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--vermilion);
+      border: 3px solid var(--vermilion);
+      box-shadow: inset 0 0 0 2px rgba(192, 57, 43, .25);
+      position: relative;
+    }
+
+    .stamp .code {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 800;
+      font-size: 52px;
+      letter-spacing: .04em;
+      line-height: 1
+    }
+
+    .stamp .lbl {
+      font-size: 8px;
+      letter-spacing: .18em;
+      margin-top: 6px;
+      text-indent: .18em;
+      font-weight: 700;
+      white-space: nowrap
+    }
+
+    .reveal {
+      animation: pop .55s cubic-bezier(.2, 1.3, .5, 1) both
+    }
+
+    @keyframes pop {
+      from {
+        transform: scale(.6) rotate(-8deg);
+        opacity: 0
+      }
+
+      to {
+        transform: none;
+        opacity: 1
+      }
+    }
+
+    .sentence {
+      font-family: "Shippori Mincho B1", serif;
+      font-weight: 700;
+      text-align: center;
+      font-size: 23px;
+      margin-top: 14px;
+      letter-spacing: .04em;
+    }
+
+    .sentence b {
+      color: var(--vermilion)
+    }
+
+    .meta {
+      text-align: center;
+      font-size: 12.5px;
+      color: var(--sub);
+      margin-top: 6px;
+      letter-spacing: .1em
+    }
+
+    footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 10.5px;
+      color: #a99c86;
+      letter-spacing: .06em;
+      line-height: 1.7
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <h1>コミュニケーションコード<span class="small"><span style="display: inline-block;">生年月日からあなたの</span><span
+          style="display: inline-block;">コミュニケーションコードを診断</span></span></h1>
+    <div class="rule"></div>
+
+    <label for="bd">生年月日（西暦8桁）</label>
+    <div class="field">
+      <input id="bd" inputmode="numeric" maxlength="8" placeholder="19900101" autocomplete="off">
+      <button id="go">診断する</button>
+    </div>
+    <div class="hint">例：1990年1月1日 → <b>19900101</b>（1900〜2050年に対応）</div>
+    <div class="err" id="err"></div>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="stamp-wrap">
+        <div class="stamp" id="stamp">
+          <div class="code" id="code">025</div>
+          <div class="lbl">COMMUNICATION CODE</div>
+        </div>
+      </div>
+      <div class="sentence">あなたは<b id="codeText">025</b>です！</div>
+
+    </section>
+  </main>
+
+  <script>
+    // 日柱60番号 -> 内部分類（コード算出用）
+    const IDX_TO_ANIMAL = {
+      1: 'チーター', 2: 'たぬき', 3: '猿', 4: 'コアラ', 5: '黒ひょう', 6: '虎',
+      7: 'チーター', 8: 'たぬき', 9: '猿', 10: 'コアラ', 11: 'こじか', 12: 'ゾウ',
+      13: '狼', 14: 'ひつじ', 15: '猿', 16: 'コアラ', 17: 'こじか', 18: 'ゾウ',
+      19: '狼', 20: 'ひつじ', 21: 'ペガサス', 22: 'ペガサス', 23: 'ひつじ', 24: '狼',
+      25: '狼', 26: 'ひつじ', 27: 'ペガサス', 28: 'ペガサス', 29: 'ひつじ', 30: '狼',
+      31: 'ゾウ', 32: 'こじか', 33: 'コアラ', 34: '猿', 35: 'ひつじ', 36: '狼',
+      37: 'ゾウ', 38: 'こじか', 39: 'コアラ', 40: '猿', 41: 'たぬき', 42: 'チーター',
+      43: '虎', 44: '黒ひょう', 45: 'コアラ', 46: '猿', 47: 'たぬき', 48: 'チーター',
+      49: '虎', 50: '黒ひょう', 51: 'ライオン', 52: 'ライオン', 53: '黒ひょう', 54: '虎',
+      55: '虎', 56: '黒ひょう', 57: 'ライオン', 58: 'ライオン', 59: '黒ひょう', 60: '虎'
+    };
+    const ANIMAL_TO_CODE = {
+      '狼': '001', '猿': '919', '虎': '555', 'コアラ': '125', 'チーター': '888', 'ライオン': '100',
+      'ゾウ': '024', 'ペガサス': '000', 'こじか': '108', '黒ひょう': '012', 'たぬき': '789', 'ひつじ': '025'
+    };
+
+
+    const ANCHOR = Date.UTC(1980, 2, 10), ANCHOR_IDX = 19;
+    function calc(y, m, d) {
+      const days = Math.round((Date.UTC(y, m - 1, d) - ANCHOR) / 86400000);
+      const idx = (((ANCHOR_IDX - 1 + days) % 60) + 60) % 60 + 1;
+      const animal = IDX_TO_ANIMAL[idx];
+      return { code: ANIMAL_TO_CODE[animal], animal };
+    }
+    function normalize(s) {
+      return s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9]/g, '');
+    }
+
+    const $ = id => document.getElementById(id);
+    const input = $('bd'), err = $('err'), result = $('result');
+
+    function diagnose() {
+      const s = normalize(input.value);
+      err.textContent = '';
+      if (s.length !== 8) { err.textContent = '西暦8桁で入力してください（例：19900101）'; return; }
+      const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+      const dt = new Date(Date.UTC(y, m - 1, d));
+      if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) { err.textContent = '存在しない日付です'; return; }
+      if (y < 1900 || y > 2050) { err.textContent = '1900〜2050年に対応しています'; return; }
+
+      const { code, animal } = calc(y, m, d);
+      $('code').textContent = code;
+      $('codeText').textContent = code;
+
+      result.classList.add('show');
+      const stamp = $('stamp'); stamp.classList.remove('reveal'); void stamp.offsetWidth; stamp.classList.add('reveal');
+    }
+
+    $('go').addEventListener('click', diagnose);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') diagnose(); });
+    input.addEventListener('input', () => { input.value = normalize(input.value).slice(0, 8); });
+  </script>
+</body>
+
+</html>
