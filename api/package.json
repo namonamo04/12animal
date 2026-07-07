@@ -1,0 +1,14 @@
+{
+  "name": "12animal-api",
+  "version": "1.0.0",
+  "description": "5 Animals Diagnostic API for Azure Static Web Apps",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests run\""
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0",
+    "axios": "^1.6.0"
+  }
+}
