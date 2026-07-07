@@ -238,45 +238,19 @@
       transform: none
     }
 
-    .stamps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 112px);
-      grid-template-rows: repeat(3, auto);
-      gap: 16px 20px;
+    .stamps-wrap {
+      display: flex;
       justify-content: center;
+      gap: 16px;
       margin: 28px 0 24px;
+      flex-wrap: wrap;
     }
 
     .stamp-box {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-    }
-
-    .surface-box {
-      grid-column: 2;
-      grid-row: 1;
-    }
-
-    .hope-box {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    .essential-box {
-      grid-column: 2;
-      grid-row: 2;
-    }
-
-    .decision-box {
-      grid-column: 3;
-      grid-row: 2;
-    }
-
-    .hidden-box {
-      grid-column: 2;
-      grid-row: 3;
+      gap: 8px;
     }
 
     .stamp-title {
@@ -314,25 +288,17 @@
       animation: pop .55s cubic-bezier(.2, 1.3, .5, 1) both
     }
 
-    /* Staggered Pop Spiral Effect */
-    .essential-box .reveal {
+    /* Stagger effect */
+    .stamp-box:nth-child(1) .reveal {
       animation-delay: 0s;
     }
 
-    .surface-box .reveal {
+    .stamp-box:nth-child(2) .reveal {
       animation-delay: 0.12s;
     }
 
-    .decision-box .reveal {
+    .stamp-box:nth-child(3) .reveal {
       animation-delay: 0.24s;
-    }
-
-    .hope-box .reveal {
-      animation-delay: 0.36s;
-    }
-
-    .hidden-box .reveal {
-      animation-delay: 0.48s;
     }
 
     @keyframes pop {
@@ -395,19 +361,9 @@
 <body>
   <main class="card">
     <div class="eyebrow">多面分析 (ラッパー版)</div>
-    <h1>コミュニケーションコード<span class="small"><span style="display: inline-block;">生年月日からあなたの5アニマル</span><span
+    <h1>コミュニケーションコード<span class="small"><span style="display: inline-block;">生年月日からあなたの</span><span
           style="display: inline-block;">コミュニケーションコードを診断 (ラッパー版)</span></span></h1>
     <div class="rule"></div>
-
-    <div class="form-group">
-      <label>性別</label>
-      <div class="gender-toggle">
-        <input type="radio" id="gender_m" name="gender" value="M">
-        <label for="gender_m">男性</label>
-        <input type="radio" id="gender_f" name="gender" value="F" checked>
-        <label for="gender_f">女性</label>
-      </div>
-    </div>
 
     <div class="form-group">
       <label for="bd">生年月日（西暦8桁）</label>
@@ -420,47 +376,31 @@
     </div>
 
     <section class="result" id="result" aria-live="polite">
-      <div class="stamps-grid">
-        <!-- 表面 -->
-        <div class="stamp-box surface-box">
-          <div class="stamp-title">表面 (2nd)</div>
-          <div class="stamp" id="stamp-surface">
-            <div class="code" id="code-surface">000</div>
-          </div>
-        </div>
-        <!-- 希望 -->
-        <div class="stamp-box hope-box">
-          <div class="stamp-title">希望</div>
-          <div class="stamp" id="stamp-hope">
-            <div class="code" id="code-hope">000</div>
-          </div>
-        </div>
+      <div class="stamps-wrap">
         <!-- 本質 -->
-        <div class="stamp-box essential-box">
+        <div class="stamp-box">
           <div class="stamp-title">本質 (1st)</div>
           <div class="stamp" id="stamp-essential">
             <div class="code" id="code-essential">000</div>
           </div>
         </div>
+        <!-- 表面 -->
+        <div class="stamp-box">
+          <div class="stamp-title">表面 (2nd)</div>
+          <div class="stamp" id="stamp-surface">
+            <div class="code" id="code-surface">000</div>
+          </div>
+        </div>
         <!-- 意思決定 -->
-        <div class="stamp-box decision-box">
+        <div class="stamp-box">
           <div class="stamp-title">意思決定 (3rd)</div>
           <div class="stamp" id="stamp-decision">
             <div class="code" id="code-decision">000</div>
           </div>
         </div>
-        <!-- 隠れ -->
-        <div class="stamp-box hidden-box">
-          <div class="stamp-title">隠れ</div>
-          <div class="stamp" id="stamp-hidden">
-            <div class="code" id="code-hidden">000</div>
-          </div>
-        </div>
       </div>
       <div class="sentence">
-        本質: <b id="codeText-essential">000</b> | 表面: <b id="codeText-surface">000</b><br>
-        意思決定: <b id="codeText-decision">000</b> | 希望: <b id="codeText-hope">000</b><br>
-        隠れ: <b id="codeText-hidden">000</b>
+        あなたの本質は <b id="codeText-essential">000</b>、表面は <b id="codeText-surface">000</b>、<span style="display: inline-block;">意思決定は <b id="codeText-decision">000</b> です！</span>
       </div>
     </section>
   </main>
@@ -495,8 +435,8 @@
         return;
       }
 
-      // 性別値を取得
-      const gender = document.querySelector('input[name="gender"]:checked').value;
+      // 性別はF固定で取得
+      const gender = 'F';
 
       // ローカルデバッグ時とSWAデプロイ時のAPIパスの振り分け
       const apiBase = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '4280'
@@ -526,12 +466,6 @@
 
         $('code-decision').textContent = data.decision || '000';
         $('codeText-decision').textContent = data.decision || '000';
-
-        $('code-hope').textContent = data.hope || '000';
-        $('codeText-hope').textContent = data.hope || '000';
-
-        $('code-hidden').textContent = data.hidden || '000';
-        $('codeText-hidden').textContent = data.hidden || '000';
 
         // アニメーションをリセットして再起動
         const stamps = document.querySelectorAll('.stamp');
