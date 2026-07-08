@@ -147,34 +147,45 @@
       color: #fff;
     }
 
-    .field {
-      display: flex;
-      gap: 10px
+    .form-container {
+      max-width: 340px;
+      margin: 0 auto;
     }
 
-    input[type="text"] {
-      flex: 1;
+    .select-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    select {
       min-width: 0;
-      font-family: "Shippori Mincho B1", serif;
-      font-size: 24px;
-      letter-spacing: .18em;
-      text-align: center;
+      font-family: "Zen Kaku Gothic New", sans-serif;
+      font-size: 16px;
+      font-weight: 500;
       color: var(--ink);
       background: #fffdf8;
       border: 1.5px solid var(--line);
       border-radius: 4px;
-      padding: 13px 10px;
+      padding: 12px 6px;
       outline: none;
       transition: border-color .2s;
+      cursor: pointer;
     }
 
-    input[type="text"]:focus {
-      border-color: var(--vermilion)
+    #year { flex: 3; }
+    #month { flex: 1.2; }
+    #day { flex: 1.2; }
+
+    select:focus {
+      border-color: var(--vermilion);
     }
 
-    input[type="text"]::placeholder {
-      color: #c4b8a4;
-      letter-spacing: .18em
+    .submit-btn {
+      width: 100%;
+      height: 48px;
+      font-size: 18px;
+      display: block;
     }
 
     button {
@@ -373,12 +384,15 @@
     <div class="rule"></div>
 
     <div class="form-group">
-      <label for="bd">生年月日（西暦8桁）</label>
-      <div class="field">
-        <input id="bd" type="text" inputmode="numeric" maxlength="8" placeholder="19900101" autocomplete="off">
-        <button id="go">診断する</button>
+      <label>生年月日</label>
+      <div class="form-container">
+        <div class="select-row">
+          <select id="year"></select>
+          <select id="month"></select>
+          <select id="day"></select>
+        </div>
+        <button id="go" class="submit-btn">診断する</button>
       </div>
-      <div class="hint">例：1990年1月1日 → <b>19900101</b>（1800〜2026年に対応）</div>
       <div class="err" id="err"></div>
     </div>
 
@@ -407,40 +421,79 @@
         </div>
       </div>
       <div class="sentence">
-        あなたのコミュニケーションコードは、1stが <b id="codeText-essential">000</b>、2ndが <b id="codeText-surface">000</b>、<span style="display: inline-block;">3rdが <b id="codeText-decision">000</b> です！</span>
-      </div>
-    </section>
-  </main>
+        あなたのコミュニケーションコードは、1stが <b   <script>
+    const $ = id => document.getElementById(id);
+    const err = $('err'), result = $('result'), goBtn = $('go');
+    const yearSelect = $('year'), monthSelect = $('month'), daySelect = $('day');
 
-  <script>
-    function normalize(s) {
-      return s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9]/g, '');
+    function getEra(y) {
+      if (y >= 2019) {
+        const r = y - 2018;
+        return `令和${r === 1 ? '元' : r}`;
+      } else if (y >= 1989) {
+        const h = y - 1988;
+        return `平成${h === 1 ? '元' : h}`;
+      } else if (y >= 1926) {
+        const s = y - 1925;
+        return `昭和${s === 1 ? '元' : s}`;
+      } else if (y >= 1912) {
+        const t = y - 1911;
+        return `大正${t === 1 ? '元' : t}`;
+      } else if (y >= 1868) {
+        const m = y - 1867;
+        return `明治${m === 1 ? '元' : m}`;
+      }
+      return '';
     }
 
-    const $ = id => document.getElementById(id);
-    const input = $('bd'), err = $('err'), result = $('result'), goBtn = $('go');
+    // Populate selects dynamically
+    for (let y = 2026; y >= 1800; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      const era = getEra(y);
+      opt.textContent = era ? `${y}年（${era}）` : `${y}年`;
+      if (y === 2000) opt.selected = true;
+      yearSelect.appendChild(opt);
+    }
+
+    for (let m = 1; m <= 12; m++) {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = `${m}月`;
+      if (m === 1) opt.selected = true;
+      monthSelect.appendChild(opt);
+    }
+
+    function updateDays() {
+      const y = +yearSelect.value;
+      const m = +monthSelect.value;
+      const selectedDay = +daySelect.value || 1;
+      const daysInMonth = new Date(y, m, 0).getDate();
+      daySelect.innerHTML = '';
+      for (let d = 1; d <= daysInMonth; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = `${d}日`;
+        if (d === selectedDay || (d === daysInMonth && selectedDay > daysInMonth)) {
+          opt.selected = true;
+        }
+        daySelect.appendChild(opt);
+      }
+    }
+
+    yearSelect.addEventListener('change', updateDays);
+    monthSelect.addEventListener('change', updateDays);
+    updateDays(); // Init days
 
     async function diagnose() {
-      const s = normalize(input.value);
       err.textContent = '';
+      const yearNum = +yearSelect.value;
+      const monthNum = +monthSelect.value;
+      const dayNum = +daySelect.value;
 
-      if (s.length !== 8) {
-        err.textContent = '西暦8桁で入力してください（例：19900101）';
-        return;
-      }
-
-      const y = s.slice(0, 4), m = s.slice(4, 6), d = s.slice(6, 8);
-      const yearNum = +y, monthNum = +m, dayNum = +d;
-      const dt = new Date(Date.UTC(yearNum, monthNum - 1, dayNum));
-
-      if (dt.getUTCFullYear() !== yearNum || dt.getUTCMonth() !== monthNum - 1 || dt.getUTCDate() !== dayNum) {
-        err.textContent = '存在しない日付です';
-        return;
-      }
-      if (yearNum < 1800 || yearNum > 2026) {
-        err.textContent = '1800〜2026年に対応しています';
-        return;
-      }
+      const y = String(yearNum);
+      const m = String(monthNum).padStart(2, '0');
+      const d = String(dayNum).padStart(2, '0');
 
       // 性別はF固定で取得
       const gender = 'F';
@@ -494,8 +547,6 @@
     }
 
     goBtn.addEventListener('click', diagnose);
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') diagnose(); });
-    input.addEventListener('input', () => { input.value = normalize(input.value).slice(0, 8); });
   </script>
 </body>
 
