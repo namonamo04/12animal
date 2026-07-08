@@ -380,12 +380,12 @@
 
 <body>
   <main class="card">
-    <h1><span style="display: inline-block;">コミュニケーション</span><span style="display: inline-block;">コード診断</span><span class="small"><span style="display: inline-block;">生年月日からあなたの</span><span style="display: inline-block;">特性を分析</span></span></h1>
+    <h1>コミュニケーション<br>コード診断<span class="small"><span style="display: inline-block;">生年月日からあなたの</span><span style="display: inline-block;">特性を分析</span></span></h1>
     <div class="rule"></div>
 
     <div class="form-group">
-      <label>生年月日</label>
       <div class="form-container">
+        <label>生年月日</label>
         <div class="select-row">
           <select id="year"></select>
           <select id="month"></select>
@@ -421,7 +421,12 @@
         </div>
       </div>
       <div class="sentence">
-        あなたのコミュニケーションコードは、1stが <b   <script>
+        あなたのコミュニケーションコードは、1stが <b id="codeText-essential">000</b>、2ndが <b id="codeText-surface">000</b>、<span style="display: inline-block;">3rdが <b id="codeText-decision">000</b> です！</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
     const $ = id => document.getElementById(id);
     const err = $('err'), result = $('result'), goBtn = $('go');
     const yearSelect = $('year'), monthSelect = $('month'), daySelect = $('day');
